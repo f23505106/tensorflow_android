@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">mnist</string>
+    <string name="clear_str">clear</string>
+    <string name="recognize_str">recognize</string>
+</resources>
