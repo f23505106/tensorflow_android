@@ -27,7 +27,7 @@ public class Classifier {
             e.printStackTrace();
         }
     }
-    public void run(float[] in,float[] out){
+    public void run(float[][][][] in,float[][] out){
         long startTime;
         long endTime;
         startTime = SystemClock.uptimeMillis();

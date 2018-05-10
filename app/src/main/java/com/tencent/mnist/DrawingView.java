@@ -1,17 +1,24 @@
 package com.tencent.mnist;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 public class DrawingView extends View {
@@ -20,24 +27,25 @@ public class DrawingView extends View {
     private Paint mPaint;
     private float mX, mY;
     private static final float TOUCH_TOLERANCE = 4;
+    private static int SAVE_INDEX = 1;
 
     public DrawingView(Context context, AttributeSet attr) {
         super(context, attr);
         setFocusable(true);
         setFocusableInTouchMode(true);
-        setBackgroundColor(Color.CYAN);
+        setBackgroundColor(Color.GRAY);
         onCanvasInitialization();
     }
 
     public void onCanvasInitialization() {
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
-        mPaint.setDither(true);
-        mPaint.setColor(Color.BLACK);
+        //mPaint.setDither(true);
+        mPaint.setColor(Color.WHITE);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeJoin(Paint.Join.ROUND);
+        mPaint.setStrokeJoin(Paint.Join.MITER);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setStrokeWidth(2);
+        mPaint.setStrokeWidth(3);
 
         mPaths = new ArrayList<>();
 
@@ -99,12 +107,12 @@ public class DrawingView extends View {
     static final int MNIST_WIDTH = 28;
     static final int MNIST_HEIGHT = 28;
     private int[] pixels = new int[MNIST_WIDTH*MNIST_HEIGHT];
-    private float[] floatValues = new float[MNIST_WIDTH*MNIST_HEIGHT];
-    private float[] outputs = new float[10];
+    private float[][][][] floatValues = new float[1][MNIST_WIDTH][MNIST_HEIGHT][1];
+    private float[][] outputs = new float[1][10];
     public void inference(Context context,Classifier cls){
         Bitmap imageBitmap = Bitmap.createBitmap(MNIST_WIDTH,MNIST_HEIGHT, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(imageBitmap);
-        canvas.drawColor(Color.WHITE);
+        canvas.drawColor(Color.BLACK);
         Matrix scaleMatrix = new Matrix();
         scaleMatrix.setScale((float)MNIST_WIDTH/getWidth(),(float)MNIST_HEIGHT/getHeight());
         for(Path p:mPaths){
@@ -113,16 +121,54 @@ public class DrawingView extends View {
             canvas.drawPath(sp,mPaint);
         }
         imageBitmap.getPixels(pixels, 0, MNIST_WIDTH, 0, 0, MNIST_WIDTH, MNIST_HEIGHT);
-        for (int i = 0; i < pixels.length; ++i) {
-            final int val = pixels[i];
-            floatValues[i] = (float)(((val) & 0xFF)) / 255;
+        for (int i = 0; i < MNIST_WIDTH; ++i) {
+            for(int j=0;j< MNIST_HEIGHT;++j) {
+                final int val = pixels[i * 28 + j];
+                floatValues[0][i][j][0] = (float) (((val) & 0xFF)) / 255;
+            }
         }
 
         cls.run(floatValues, outputs);
-        for(int i=0;i<outputs.length;++i){
-            Log.d("fgt","index:"+i+"  possibility:"+outputs[i]);
+        int maxIndex = 0;
+        for(int i=0;i<outputs[0].length;++i){
+            if(outputs[0][maxIndex] < outputs[0][i]) {
+                maxIndex = i;
+            }
+
+            Log.d("fgt","index:"+i+"  possibility:"+outputs[0][i]);
         }
-        if(context != null)
-            CapturePhotoUtils.insertImage(context.getContentResolver(),imageBitmap,"mnist","this is minst draw");
+        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+        alertDialog.setTitle("recognize result");
+        alertDialog.setMessage(maxIndex+" probability:"+outputs[0][maxIndex]);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        reset();
+                    }
+                });
+        alertDialog.show();
+//        if(context != null)
+//            saveImageToExternal(context,""+SAVE_INDEX++,imageBitmap);
+    }
+    private void saveImageToExternal(Context context,String imgName, Bitmap bm) {
+//Create Path to save Image
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES); //Creates app specific folder
+        path.mkdirs();
+        File imageFile = new File(path, imgName + ".png"); // Imagename.png
+        try {
+            FileOutputStream out = new FileOutputStream(imageFile);
+            bm.compress(Bitmap.CompressFormat.PNG, 100, out); // Compress Image
+            out.flush();
+            out.close();
+            MediaScannerConnection.scanFile(context, new String[]{imageFile.getAbsolutePath()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                public void onScanCompleted(String path, Uri uri) {
+                    Log.i("fgt", "Scanned " + path + ":");
+                    Log.i("fgt", "-> uri=" + uri);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
