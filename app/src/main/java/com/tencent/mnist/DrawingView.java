@@ -26,6 +26,8 @@ public class DrawingView extends View {
     private Path mPath;
     private Paint mPaint;
     private float mX, mY;
+    private float mXmin = Float.POSITIVE_INFINITY,mXmax = Float.NEGATIVE_INFINITY,
+            mYmin = Float.POSITIVE_INFINITY,mYmax = Float.NEGATIVE_INFINITY;
     private static final float TOUCH_TOLERANCE = 4;
     private static int SAVE_INDEX = 1;
 
@@ -50,11 +52,25 @@ public class DrawingView extends View {
         mPaths = new ArrayList<>();
 
     }
+    private void updateXyRange(float x,float y){
+        if(x<mXmin){
+            mXmin = x;
+        }
+        if(x>mXmax){
+            mXmax = x;
+        }
+        if(y<mYmin){
+            mYmin = y;
+        }
+        if(y>mYmax){
+            mYmax = y;
+        }
+    }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
         float y = event.getY();
-
+        updateXyRange(x,y);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 touch_start(x, y);
@@ -114,7 +130,27 @@ public class DrawingView extends View {
         Canvas canvas = new Canvas(imageBitmap);
         canvas.drawColor(Color.BLACK);
         Matrix scaleMatrix = new Matrix();
-        scaleMatrix.setScale((float)MNIST_WIDTH/getWidth(),(float)MNIST_HEIGHT/getHeight());
+
+        float xr = mXmax - mXmin;
+        float yr = mYmax - mYmin;
+        float range = 0;
+        float xtrans = 0;
+        float ytrans = 0;
+        if(xr>yr){
+            range = xr;
+            xtrans = -mXmin;
+            ytrans = -mYmin+(xr-yr)/2;
+        }else{
+            range = yr;
+            xtrans = -mXmin+(yr-xr)/2;
+            ytrans = -mYmin;
+        }
+
+        scaleMatrix.setTranslate (xtrans,ytrans);
+        Log.d("fgt","range:"+range);
+        float scale = 20f/range;
+        scaleMatrix.postScale(scale,scale);
+        scaleMatrix.postTranslate (4,4);
         for(Path p:mPaths){
             Path sp = new Path(p);
             sp.transform(scaleMatrix);
@@ -124,7 +160,7 @@ public class DrawingView extends View {
         for (int i = 0; i < MNIST_WIDTH; ++i) {
             for(int j=0;j< MNIST_HEIGHT;++j) {
                 final int val = pixels[i * 28 + j];
-                floatValues[0][i][j][0] = (float) (((val) & 0xFF)) / 255;
+                floatValues[0][i][j][0] = (((val) & 0xFF) - 255.0f/2) / 255.0f;
             }
         }
 
