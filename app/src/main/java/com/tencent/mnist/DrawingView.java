@@ -53,6 +53,7 @@ public class DrawingView extends View {
 
     }
     private void updateXyRange(float x,float y){
+        //Log.d("fgt","updateXyRange x:"+x+" y:"+y);
         if(x<mXmin){
             mXmin = x;
         }
@@ -65,12 +66,12 @@ public class DrawingView extends View {
         if(y>mYmax){
             mYmax = y;
         }
+        //Log.d("fgt","updateXyRange minx:"+mXmin+" maxx:"+mXmax+" miny:"+mYmin+" maxy:"+mYmax);
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
         float y = event.getY();
-        updateXyRange(x,y);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 touch_start(x, y);
@@ -105,6 +106,7 @@ public class DrawingView extends View {
         float dx = Math.abs(x - mX);
         float dy = Math.abs(y - mY);
         if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+            updateXyRange(x,y);
             mPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
             mX = x;
             mY = y;
@@ -117,6 +119,10 @@ public class DrawingView extends View {
     public void reset()
     {
         Log.d("fgt","clear");
+        mXmin = Float.POSITIVE_INFINITY;
+        mXmax = Float.NEGATIVE_INFINITY;
+        mYmin = Float.POSITIVE_INFINITY;
+        mYmax = Float.NEGATIVE_INFINITY;
         mPaths.clear();
         invalidate();
     }
@@ -145,7 +151,9 @@ public class DrawingView extends View {
             xtrans = -mXmin+(yr-xr)/2;
             ytrans = -mYmin;
         }
-
+        Log.d("fgt","width:"+getWidth()+" height:"+getHeight());
+        Log.d("fgt","minx:"+mXmin+" maxx:"+mXmax+" miny:"+mYmin+" maxy:"+mYmax);
+        Log.d("fgt","xtrans:"+xtrans+" ytrans:"+ytrans);
         scaleMatrix.setTranslate (xtrans,ytrans);
         Log.d("fgt","range:"+range);
         float scale = 20f/range;
