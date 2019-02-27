@@ -5,6 +5,8 @@
 
 模型的来自 https://github.com/tensorflow/models/blob/master/tutorials/image/mnist/convolutional.py
 
+![](https://markdown-1251303493.cos.ap-beijing.myqcloud.com/mnist-model.png)
+
 训练模型
 
 ```python
@@ -24,6 +26,6 @@ tflite_convert --graph_def_file=frozen_model.pb --output_file=model.tflite --inp
 
 使用tflite-test.py验证生成的tflite模型
 
-![](https://markdown-1251303493.cos.ap-beijing.myqcloud.com/mnist-model.png)
+
 
 
