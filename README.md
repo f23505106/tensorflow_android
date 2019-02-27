@@ -25,3 +25,4 @@ tflite_convert --graph_def_file=frozen_model.pb --output_file=model.tflite --inp
 使用tflite-test.py验证生成的tflite模型
 
 ![](https://markdown-1251303493.cos.ap-beijing.myqcloud.com/mnist-model.png)
+
