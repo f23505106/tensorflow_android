@@ -5,7 +5,7 @@
 
 模型的来自 https://github.com/tensorflow/models/blob/master/tutorials/image/mnist/convolutional.py
 
-![](https://markdown-1251303493.cos.ap-beijing.myqcloud.com/mnist-model.png)
+![](https://markdown-1251303493.cos.ap-beijing.myqcloud.com/mnist-model1.png)
 
 训练模型
 
